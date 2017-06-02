@@ -1,0 +1,19 @@
+{
+  "name": "purescript-emmet-parser",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "output"
+  ],
+  "dependencies": {
+    "purescript-prelude": "^3.0.0",
+    "purescript-console": "^3.0.0",
+    "purescript-parsing": "^4.2.1",
+    "purescript-newtype": "^2.0.0",
+    "purescript-matryoshka": "^0.3.0"
+  },
+  "devDependencies": {
+    "purescript-psci-support": "^3.0.0"
+  }
+}
