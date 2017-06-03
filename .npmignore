@@ -1,0 +1,8 @@
+/bower_components/
+/node_modules/
+/.pulp-cache/
+/.psci*
+/.purs-repl
+/test/
+/bin/
+/output/*/externs.json

@@ -1,0 +1,31 @@
+{
+  "name": "purescript-emmet",
+  "version": "1.0.0",
+  "description": "Emmet for PureScript",
+  "main": "index.js",
+  "bin": {
+    "purescript-emmet": "index.js"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "compile": "purs compile \"src/**/*.purs\" \"bower_components/purescript-*/src/**/*.purs\" \"bin/Main.purs\" ",
+    "prepublish": "rimraf output && npm run compile",
+    "build": "npm run -s compile",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kRITZCREEK/purescript-emmet.git"
+  },
+  "author": "kRITZCREEK",
+  "license": "LGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/kRITZCREEK/purescript-emmet/issues"
+  },
+  "homepage": "https://github.com/kRITZCREEK/purescript-emmet#readme",
+  "devDependencies": {
+    "rimraf": "^2.6.1"
+  }
+}
