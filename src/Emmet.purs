@@ -8,7 +8,7 @@ import Prelude
 
 import Data.Array (foldr)
 import Data.Array as Array
-import Data.Foldable (class Foldable, fold, intercalate)
+import Data.Foldable (fold, intercalate)
 import Data.Functor.Nu (Nu)
 import Data.List (List)
 import Data.List as List
@@ -57,18 +57,15 @@ renderHtmlAttribute = case _ of
   HtmlId i -> "id=" <> show i
   HtmlClass c -> "class=" <> show c
   HtmlClasses cs ->
-    "class=\"" <> List.intercalate " " cs <> "\""
-
-renderHtmlAttributeHalogen :: HtmlAttribute -> String
-renderHtmlAttributeHalogen = case _ of
-  HtmlId i -> "HP.id_ " <> show i
-  HtmlClass c -> "HP.class_ (HH.ClassName " <> show c <> ")"
-  HtmlClasses cs ->
-    "HP.classes [ "
-      <> commaSep (map (\c -> "HH.ClassName " <> show c) cs)
-      <> " ]"
+    "class=\"" <> intercalate " " cs <> "\""
 
 data HtmlBuilderF a = HtmlBuilderF (List (Node a))
+
+type Node a =
+  { name :: String
+  , attributes :: List HtmlAttribute
+  , children :: List a
+  }
 
 derive instance functorHtmlBuilderF :: Functor HtmlBuilderF
 
@@ -76,12 +73,6 @@ type HtmlBuilder = Nu HtmlBuilderF
 
 htmlBuilder :: List (Node HtmlBuilder) -> HtmlBuilder
 htmlBuilder cs = M.embed (HtmlBuilderF cs)
-
-type Node a =
-  { name :: String
-  , attributes :: List HtmlAttribute
-  , children :: List a
-  }
 
 mapNode :: forall a b. (List a -> List b) -> Node a -> Node b
 mapNode f node = node { children = f node.children }
@@ -92,39 +83,20 @@ setBuildChildren cs builder =
    map (mapNode (const cs)) nodes
    # htmlBuilder
 
-commaSep :: forall f. Foldable f => f String -> String
-commaSep = List.intercalate ", "
-
 renderHtmlBuilder :: HtmlBuilder -> String
 renderHtmlBuilder = M.cata case _ of
   HtmlBuilderF nodes ->
     nodes
       <#> (\ {name, attributes, children} ->
         "<" <> name <> " "
-        <> List.intercalate " " (map renderHtmlAttribute attributes)
+        <> intercalate " " (map renderHtmlAttribute attributes)
         <> ">\n"
-        <> List.intercalate "\n" (map (pad 2) children)
+        <> intercalate "\n" (map (pad 2) children)
         <> "\n<" <> name <> "/>")
       # List.intercalate "\n"
-
-pad :: Int -> String -> String
-pad n s = s
-  # split (Pattern "\n")
-  <#> append (fold (Array.replicate n " "))
-  # intercalate "\n"
-
--- renderHalogen :: Html -> String
--- renderHalogen = M.cata case _ of
---   Text t ->
---     "HH.text " <> show t <> ""
---   SelfClosing s attrs ->
---     "HH." <> s <> " [ " <> commaSep (map renderHtmlAttribute attrs) <> " ]"
---   Node s attrs children
---     | List.null attrs ->
---       "HH." <> s
---       <> "_ [ " <> commaSep children <> " ]"
---     | otherwise ->
---       "HH." <> s
---       <> " [ " <> commaSep (map renderHtmlAttribute attrs)
---       <> " ] [ " <> commaSep children
---       <> " ]"
+    where
+      pad :: Int -> String -> String
+      pad n s = s
+        # split (Pattern "\n")
+        <#> append (fold (Array.replicate n " "))
+        # intercalate "\n"
