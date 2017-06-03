@@ -94,9 +94,9 @@ renderHtmlBuilder = M.cata case _ of
         <> intercalate "\n" (map (pad 2) children)
         <> "\n<" <> name <> "/>")
       # List.intercalate "\n"
-    where
-      pad :: Int -> String -> String
-      pad n s = s
-        # split (Pattern "\n")
-        <#> append (fold (Array.replicate n " "))
-        # intercalate "\n"
+
+pad :: Int -> String -> String
+pad n s = s
+  # split (Pattern "\n")
+  <#> append (fold (Array.replicate n " "))
+  # intercalate "\n"

@@ -2,15 +2,24 @@ module Emmet.Halogen where
 
 import Prelude
 
+import Data.Either (Either)
 import Data.Foldable (intercalate)
 import Data.List (List(..), null, singleton, uncons, (:))
 import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), contains)
-import Emmet (HtmlAttribute(..), HtmlBuilder, HtmlBuilderF(HtmlBuilderF), Node, pad)
+import Emmet (HtmlAttribute(..), HtmlBuilder, HtmlBuilderF(..), Node, evalEmmet, pad, parseEmmet)
 import Matryoshka as M
+import Text.Parsing.Parser (ParseError, runParser)
 
 indent ∷ Int
 indent = 4
+
+emmetHalogen ∷ String → Either ParseError String
+emmetHalogen s = s
+  # runParser <@> parseEmmet
+  <#> evalEmmet
+  <#> map renderHalogen
+  <#> intercalate "\n"
 
 renderHalogen ∷ HtmlBuilder → String
 renderHalogen =
