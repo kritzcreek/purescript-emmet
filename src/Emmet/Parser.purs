@@ -5,7 +5,7 @@ import Prelude
 import Control.Alt ((<|>))
 import Control.Lazy (defer)
 import Data.Array as Array
-import Data.Char.Unicode (isDigit)
+import Data.Char.Unicode (isAlphaNum, isDigit)
 import Data.Foldable (class Foldable)
 import Data.Int as Int
 import Data.List (many, some)
@@ -37,8 +37,11 @@ parseMultiplication e = do
   repetitions <- maybe (fail "Failed to parse Multiplication number") pure (Int.fromString sInt)
   pure (multiplication e repetitions)
 
+classChar :: EmmetParser Char
+classChar = satisfy (isAlphaNum || (==) '-' || (==) '_')
+
 parseClass :: EmmetParser Attribute
-parseClass = char '.' *> (Class <<< fromCharList <$> some alphaNum)
+parseClass = char '.' *> (Class <<< fromCharList <$> some classChar)
 
 parseId :: EmmetParser Attribute
 parseId = char '#' *> (Id <<< fromCharList <$> some alphaNum)
