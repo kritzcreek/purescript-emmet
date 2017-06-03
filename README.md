@@ -100,11 +100,6 @@ Multiplication:
 <div></div>
 ```
 
-### Example
-
-These different pieces can be composed to build up fairly complex HTML
-structures.
-
 ## Renderers
 
 An HTML as well as a Halogen renderer are provided.
