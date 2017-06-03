@@ -12,50 +12,70 @@ The following subset of the Emmet spec is currently supported:
 
 Simple elements:
 
-`div` → `<div></div>`
+`div` →
+```html
+<div></div>
+```
 
 Classes:
 
-`div.classname` → `<div class="classname"></div>`
+`div.classname` →
+```html
+<div class="classname"></div>
+```
 
 Ids:
-`div#myId` → `<div id="myId"></div>`
+
+`div#myId` →
+```html
+<div id="myId"></div>
+```
 
 ### Nesting
 
 Child:
-`div>ul` → `<div><ul></ul></div>`
+`div>ul` →
+```html
+<div>
+  <ul></ul>
+</div>
+```
 
 Sibling:
-`div+ul` → `<div></div><ul></ul>`
+`div+ul` →
+```html
+<div></div>
+<ul></ul>
+```
 
 Grouping:
 `div>ul+div` →
 
-```html 
+```html
 <div>
-    <ul>
-    <ul/>
-<div>
+  <ul><ul/>
+  <div><div/>
 <div/>
-<div/
 ```
 
 `(div>ul)+div` →
 
 ```html
 <div>
-    <ul>
-    <ul/>
-    <div>
-    <div/>
+  <ul><ul/>
 <div/>
+<div><div/>
 ```
 
 ### Modifiers
 
 Multiplication:
-`div*2` → `<div></div><div></div>`
+`div*3` →
+```html
+<div></div>
+<div></div>
+<div></div>
+```
 
 ### Example
 
@@ -65,6 +85,3 @@ structures.
 ## Renderers
 
 An HTML as well as a Halogen renderer are provided.
-
-
-
