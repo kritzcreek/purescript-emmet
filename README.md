@@ -4,6 +4,8 @@ purescript-emmet
 A library for [emmet-like](https://docs.emmet.io/abbreviations/) html
 abbreviations and generators in PureScript.
 
+<img src="http://i.imgur.com/xs7NZl1.gif" width="500px"></img>
+
 # Installing
 
 `npm i -g purescript-emmet`
