@@ -4,6 +4,27 @@ purescript-emmet
 A library for [emmet-like](https://docs.emmet.io/abbreviations/) html
 abbreviations and generators in PureScript.
 
+# Installing
+
+`npm i -g purescript-emmet`
+
+# Usage
+
+`purescript-emmet` expects an abbreviation on stdin and outputs generated
+halogen markup on stdout. As an example of how to use this in Emacs, add this to
+your `init.el`:
+
+```emacs-lisp
+(defun purescript-emmet ()
+  (interactive)
+  (let ((start (point))
+        (end (save-excursion (beginning-of-line-text) (point))))
+    (call-process-region start end "purescript-emmet" t t)))
+(global-set-key (kbd "C-c C-e") 'purescript-emmet)
+```
+
+(Choose whatever keybinding you prefer)
+
 ## Abbreviations
 
 The following subset of the Emmet spec is currently supported:
