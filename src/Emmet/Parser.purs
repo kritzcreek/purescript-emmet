@@ -44,7 +44,7 @@ parseClass :: EmmetParser Attribute
 parseClass = char '.' *> (Class <<< fromCharList <$> some classChar)
 
 parseId :: EmmetParser Attribute
-parseId = char '#' *> (Id <<< fromCharList <$> some alphaNum)
+parseId = char '#' *> (Id <<< fromCharList <$> some classChar)
 
 parseElement :: EmmetParser Emmet
 parseElement = element <$> parseElementName <*> many (parseClass <|> parseId)
