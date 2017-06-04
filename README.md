@@ -7,11 +7,11 @@ write a renderer for all kinds of HTML DSLs).
 
 <img src="http://i.imgur.com/xs7NZl1.gif" width="500px"></img>
 
-# Installing
+## Installing
 
 `npm i -g purescript-emmet`
 
-# Usage
+## Usage
 
 `purescript-emmet` expects an abbreviation on stdin and outputs generated
 halogen markup on stdout. As an example of how to use this in Emacs, add this to
@@ -28,13 +28,13 @@ your `init.el`:
 
 (Choose whatever keybinding you prefer)
 
-# Usage as a Library
+## Usage as a Library
 
 Check `Emmet.Halogen.emmetHalogen` to see an example usage of the library and
 how you'd go about writing your own renderer.
 LICENSE
 
-# LICENSE
+## LICENSE
 
 Copyright 2017 Christoph Hegemann
 
