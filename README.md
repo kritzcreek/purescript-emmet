@@ -1,8 +1,9 @@
 purescript-emmet
 ==
 
-A library for [emmet-like](https://docs.emmet.io/abbreviations/) html
-abbreviations and generators in PureScript.
+A tool for [emmet-like](https://docs.emmet.io/abbreviations/) html abbreviations
+and generators in PureScript (Right now it only does Halogen, but it's easy to
+write a renderer for all kinds of HTML DSLs).
 
 <img src="http://i.imgur.com/xs7NZl1.gif" width="500px"></img>
 
@@ -27,79 +28,7 @@ your `init.el`:
 
 (Choose whatever keybinding you prefer)
 
-## Abbreviations
+# Usage as a Library
 
-The following subset of the Emmet spec is currently supported:
-
-### Elements
-
-Simple elements:
-
-`div` →
-```html
-<div></div>
-```
-
-Classes:
-
-`div.classname` →
-```html
-<div class="classname"></div>
-```
-
-Ids:
-
-`div#myId` →
-```html
-<div id="myId"></div>
-```
-
-### Nesting
-
-Child:
-`div>ul` →
-```html
-<div>
-  <ul></ul>
-</div>
-```
-
-Sibling:
-`div+ul` →
-```html
-<div></div>
-<ul></ul>
-```
-
-Grouping:
-`div>ul+div` →
-
-```html
-<div>
-  <ul><ul/>
-  <div><div/>
-<div/>
-```
-
-`(div>ul)+div` →
-
-```html
-<div>
-  <ul><ul/>
-<div/>
-<div><div/>
-```
-
-### Modifiers
-
-Multiplication:
-`div*3` →
-```html
-<div></div>
-<div></div>
-<div></div>
-```
-
-## Renderers
-
-An HTML as well as a Halogen renderer are provided.
+Check `Emmet.Halogen.emmetHalogen` to see an example usage of the library and
+how you'd go about writing your own renderer.
