@@ -1,14 +1,14 @@
 module Emmet.Halogen where
 
-import Prelude
+import Emmet
 
 import Data.Either (Either)
 import Data.Foldable (intercalate)
 import Data.List (List(..), null, singleton, uncons, (:))
 import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), contains)
-import Emmet (HtmlAttribute(..), HtmlBuilder, HtmlBuilderF(..), Node, evalEmmet, pad, parseEmmet)
 import Matryoshka as M
+import Prelude (map, otherwise, show, (#), (<#>), (<>), (<@>))
 import Text.Parsing.Parser (ParseError, runParser)
 
 indent ∷ Int
@@ -51,7 +51,7 @@ renderNoAttributes name children
   | otherwise = "HH." <> name <> "_\n" <>
       intercalate "\n" (map (pad indent) (renderList children))
 
-renderList :: List String -> List String
+renderList ∷ List String → List String
 renderList = case _ of
   Nil → singleton ("[ ]")
   head : Nil →
