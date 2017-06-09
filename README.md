@@ -32,7 +32,6 @@ your `init.el`:
 
 Check `Emmet.Halogen.emmetHalogen` to see an example usage of the library and
 how you'd go about writing your own renderer.
-LICENSE
 
 ## LICENSE
 
