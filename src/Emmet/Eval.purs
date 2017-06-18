@@ -11,7 +11,7 @@ import Data.List as List
 import Data.List.NonEmpty as NE
 import Data.Maybe (Maybe(Just, Nothing), maybe)
 import Data.String (Pattern(Pattern), split)
-import Emmet.Types (Attribute, Emmet, EmmetF(..), getClass, getId)
+import Emmet.Types (Attribute, Emmet, EmmetF(..), getClass, getId, getInputType, InputType)
 import Matryoshka as M
 
 evalEmmet :: Emmet -> NE.NonEmptyList HtmlBuilder
@@ -29,6 +29,7 @@ attributesToHtml attrs =
   let
     classes = List.mapMaybe getClass attrs
     ids = List.mapMaybe getId attrs
+    inputTypes = map HtmlTypeInput (List.mapMaybe getInputType attrs)
     htmlClasses =
       case List.uncons classes of
         Nothing -> List.Nil
@@ -38,13 +39,14 @@ attributesToHtml attrs =
           List.singleton (HtmlClasses classes)
     htmlId = maybe List.Nil (List.singleton <<< HtmlId) (List.head ids)
   in
-    htmlId <> htmlClasses
+    htmlId <> htmlClasses <> inputTypes
 
 
 data HtmlAttribute
   = HtmlId String
   | HtmlClass String
   | HtmlClasses (List String)
+  | HtmlTypeInput InputType
 
 renderHtmlAttribute :: HtmlAttribute -> String
 renderHtmlAttribute = case _ of
@@ -52,6 +54,8 @@ renderHtmlAttribute = case _ of
   HtmlClass c -> "class=" <> show c
   HtmlClasses cs ->
     "class=\"" <> intercalate " " cs <> "\""
+  HtmlTypeInput t ->
+    "type=\"" <> (show t) <> "\""
 
 data HtmlBuilderF a = HtmlBuilderF (List (Node a))
 
