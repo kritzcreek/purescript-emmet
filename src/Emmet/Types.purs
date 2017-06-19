@@ -4,10 +4,10 @@ import Prelude
 
 import DOM.HTML.Indexed.InputType (InputType, InputType(..), renderInputType) as IT
 import Data.Functor.Nu (Nu)
-import Data.Generic (class Generic, gEq)
 import Data.List (List)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, unwrap)
+import Data.Tuple (Tuple(..))
 import Matryoshka as M
 
 newtype InputType = InputType IT.InputType
@@ -46,12 +46,19 @@ data Attribute
   = Class String
   | Id String
   | TypeInputType InputType
+  | StringAttribute String String
 
 instance attributeEq :: Eq Attribute where
   eq (TypeInputType a) (TypeInputType b) = eq a b
   eq (Class a) (Class b) = eq a b
   eq (Id a) (Id b) = eq a b
+  eq (StringAttribute a b) (StringAttribute c d) = (eq a c) && (eq b d)
   eq _ _ = false
+
+getStringAttribute :: Attribute -> Maybe (Tuple String String)
+getStringAttribute = case _ of
+  StringAttribute name val -> Just (Tuple name val)
+  _ -> Nothing
 
 getClass :: Attribute -> Maybe String
 getClass = case _ of
@@ -73,6 +80,7 @@ instance showAttribute :: Show Attribute where
     Class s -> "(Class " <> s <> ")"
     Id s -> "(Id " <> s <> ")"
     TypeInputType s -> "(Type " <> (IT.renderInputType (unwrap s)) <> ")"
+    StringAttribute a b -> "(StringAttribute " <> a <> " = " <> b <> ")"
 
 data EmmetF a
   = Child a a

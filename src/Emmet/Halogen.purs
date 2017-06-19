@@ -47,6 +47,7 @@ renderWithAttributes name attributes children =
       HtmlClass c → "HP.class_ (HH.ClassName " <> show c <> ")"
       HtmlClasses cs → "HP.classes (map HH.ClassName [ " <> intercalate ", " (map show cs) <> " ])"
       HtmlTypeInput t → "HP.type HP." <> (renderInputType t)
+      HtmlStringAttribute name val → "HP." <> name <> " \"" <> val <> "\""
 
 renderNoAttributes ∷ String → List String → String
 renderNoAttributes name children
@@ -64,7 +65,6 @@ renderList = case _ of
       singleton ("[ " <> head <> " ]")
   head : tail →
     ("[ " <> head) : map (", " <> _) tail <> singleton ("]")
-
 
 renderInputType ∷ InputType → String
 renderInputType a = case (unwrap a) of

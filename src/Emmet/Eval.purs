@@ -2,6 +2,7 @@ module Emmet.Eval where
 
 import Prelude
 
+import Control.Biapply (biapply)
 import Data.Array (foldr)
 import Data.Array as Array
 import Data.Foldable (fold, intercalate)
@@ -11,7 +12,8 @@ import Data.List as List
 import Data.List.NonEmpty as NE
 import Data.Maybe (Maybe(Just, Nothing), maybe)
 import Data.String (Pattern(Pattern), split)
-import Emmet.Types (Attribute, Emmet, EmmetF(..), getClass, getId, getInputType, InputType)
+import Data.Tuple (Tuple(..))
+import Emmet.Types (Attribute, Emmet, EmmetF(..), getClass, getId, getInputType, getStringAttribute, InputType)
 import Matryoshka as M
 
 evalEmmet :: Emmet -> NE.NonEmptyList HtmlBuilder
@@ -30,6 +32,7 @@ attributesToHtml attrs =
     classes = List.mapMaybe getClass attrs
     ids = List.mapMaybe getId attrs
     inputTypes = map HtmlTypeInput (List.mapMaybe getInputType attrs)
+    stringAttributes = map (\(Tuple a b) -> HtmlStringAttribute a b) (List.mapMaybe getStringAttribute attrs)
     htmlClasses =
       case List.uncons classes of
         Nothing -> List.Nil
@@ -39,14 +42,14 @@ attributesToHtml attrs =
           List.singleton (HtmlClasses classes)
     htmlId = maybe List.Nil (List.singleton <<< HtmlId) (List.head ids)
   in
-    htmlId <> htmlClasses <> inputTypes
-
+    htmlId <> htmlClasses <> inputTypes <> stringAttributes
 
 data HtmlAttribute
   = HtmlId String
   | HtmlClass String
   | HtmlClasses (List String)
   | HtmlTypeInput InputType
+  | HtmlStringAttribute String String
 
 renderHtmlAttribute :: HtmlAttribute -> String
 renderHtmlAttribute = case _ of
@@ -56,6 +59,8 @@ renderHtmlAttribute = case _ of
     "class=\"" <> intercalate " " cs <> "\""
   HtmlTypeInput t ->
     "type=\"" <> (show t) <> "\""
+  HtmlStringAttribute name val ->
+    name <> "=\"" <> (show val) <> "\""
 
 data HtmlBuilderF a = HtmlBuilderF (List (Node a))
 
