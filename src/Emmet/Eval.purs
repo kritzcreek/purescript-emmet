@@ -3,28 +3,35 @@ module Emmet.Eval where
 import Prelude
 
 import Control.Biapply (biapply)
+import Control.Monad.Free (liftF)
 import Data.Array (foldr)
 import Data.Array as Array
 import Data.Foldable (fold, intercalate)
-import Data.Functor.Nu (Nu)
+import Data.Functor.Nu (Nu, observe)
 import Data.List (List)
 import Data.List as List
 import Data.List.NonEmpty as NE
 import Data.Maybe (Maybe(Just, Nothing), maybe)
+import Data.Monoid (mempty)
+import Data.Newtype (unwrap)
 import Data.String (Pattern(Pattern), split)
 import Data.Tuple (Tuple(..))
-import Emmet.Types (Attribute, Emmet, EmmetF(..), getClass, getId, getInputType, getStringAttribute, InputType)
+import Emmet.Types (Attribute, Emmet, EmmetF(..), InputType, climbUpTransform, getClass, getId, getInputType, getStringAttribute)
 import Matryoshka as M
 
 evalEmmet :: Emmet -> NE.NonEmptyList HtmlBuilder
-evalEmmet = M.cata case _ of
+evalEmmet e = (climbUpTransform e) # M.cata case _ of
   Child os c -> setBuildChildren (NE.toList c) <$> os
+  ClimbUp p c -> p <> c
   Sibling a b -> a <> b
   Multiplication a n ->
     foldr (<>) a (Array.replicate (n - 1) a)
   Element name attrs ->
     NE.singleton (htmlBuilder (List.singleton
       { name, attributes: attributesToHtml attrs, children: List.Nil }))
+
+-- climbUp :: List HtmlBuilder -> HtmlBuilder -> HtmlBuilder
+-- climbUp l =
 
 attributesToHtml :: List Attribute -> List HtmlAttribute
 attributesToHtml attrs =

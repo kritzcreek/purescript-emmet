@@ -48,6 +48,7 @@ parseGeneralStringAttribute = do
     ])
   wrapper <- char '=' *> oneOf ['\'','"']
   val <- manyTill (anyChar) (char wrapper)
+  void $ char ']'
   pure $ StringAttribute attr (fromCharList val)
 
 parseElement :: EmmetParser Emmet

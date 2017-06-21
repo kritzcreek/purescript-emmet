@@ -3,7 +3,6 @@ module Test.Main where
 import Emmet
 import Prelude
 
-import Control.Monad.Aff (delay)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Console (log)
 import DOM.HTML.Indexed.InputType (InputType(..)) as IT
@@ -21,9 +20,9 @@ import Text.Parsing.Parser (runParser)
 main :: Eff (RunnerEffects ()) Unit
 main = do
 
-  log $ show $ emmetHalogen "input.class-name"
-  log $ show $ emmetHalogen "input.class-name[type='text'][placeholder='type here']"
-  log $ show $ emmetHalogen "div.classname#id"
+  log $ show $ emmetHalogen "div.c>div.c^input.c"
+  -- log $ show $ emmetHalogen "input.class-name[type='text'][placeholder='type here']"
+  -- log $ show $ emmetHalogen "div.classname#id"
 
   run [consoleReporter] do
     describe "Halogen Parser - InputElement" do

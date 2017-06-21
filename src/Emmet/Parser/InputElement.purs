@@ -2,10 +2,7 @@ module Emmet.Parser.InputElement where
 
 import Prelude
 
-import Control.Alt (($>), (<|>))
-import Control.Alternative (empty, when, (*>), (<*))
-import Control.Lazy (defer)
-import Control.MonadPlus (guard)
+import Control.Alt ((<|>))
 import DOM.HTML.Indexed.InputType (InputType(..)) as IT
 import Data.Array as Array
 import Data.Char.Unicode (isAlphaNum, isDigit)
