@@ -1,24 +1,18 @@
 module Emmet.Eval where
 
 import Prelude
-
-import Control.Biapply (biapply)
-import Control.Bind ((>=>))
-import Control.Monad.Free (liftF)
-import DOM.HTML.Types (HTMLElement)
 import Data.Array (foldr)
 import Data.Array as Array
-import Data.Foldable (fold, foldMap, intercalate)
-import Data.Functor.Nu (Nu, observe)
+import Data.Foldable (fold, intercalate)
+import Data.Functor.Nu (Nu)
 import Data.List (List)
 import Data.List as List
 import Data.List.NonEmpty as NE
 import Data.Maybe (Maybe(Just, Nothing), maybe)
-import Data.Monoid (mempty)
-import Data.Newtype (unwrap)
 import Data.String (Pattern(Pattern), split)
 import Data.Tuple (Tuple(..))
-import Emmet.Types (Attribute, Emmet, EmmetF(..), InputType, climbUpTransform, getClass, getId, getInputType, getStringAttribute, textContentTransform)
+import Emmet.Types (Emmet, EmmetF(..), climbUpTransform, textContentTransform)
+import Emmet.Attribute (Attribute, InputType, getClass, getId, getInputType, getStringAttribute)
 import Matryoshka as M
 
 evalEmmet :: Emmet -> NE.NonEmptyList HtmlBuilder
@@ -34,8 +28,6 @@ evalEmmet e = (textContentTransform (climbUpTransform e)) # M.cata case _ of
   Text t ->
     NE.singleton (htmlBuilder (List.singleton $ HTMLText t))
 
--- climbUp :: List HtmlBuilder -> HtmlBuilder -> HtmlBuilder
--- climbUp l =
 
 attributesToHtml :: List Attribute -> List HtmlAttribute
 attributesToHtml attrs =

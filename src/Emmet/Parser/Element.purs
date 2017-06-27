@@ -1,28 +1,19 @@
 module Emmet.Parser.Element where
 
-import Emmet.Parser.Data
 import Prelude
-
-import Control.Alt (($>), (<|>))
-import Control.Alternative (empty, when, (*>), (<*))
-import Control.Lazy (defer)
-import Control.MonadPlus (guard)
-import DOM.HTML.Indexed.InputType (InputType(..)) as IT
+import Emmet.Parser.Data (EmmetParser)
+import Control.Alt ((<|>))
 import Data.Array as Array
-import Data.Char.Unicode (isAlphaNum, isDigit)
+import Data.Char.Unicode (isAlphaNum)
 import Data.Foldable (class Foldable)
-import Data.Functor (voidLeft, ($>))
-import Data.Int as Int
 import Data.List (many, some)
-import Data.Maybe (Maybe(..), maybe)
-import Data.Newtype (wrap)
-import Data.String (fromCharArray, trim)
-import Emmet.Types (Attribute(..), Emmet, InputType, child, element, multiplication, sibling)
-import Text.Parsing.Parser (Parser, fail)
-import Text.Parsing.Parser.Combinators (between, endBy, endBy1, manyTill, notFollowedBy, try)
+import Data.String (fromCharArray)
+import Emmet.Types (Emmet, element)
+import Emmet.Attribute (Attribute(StringAttribute, TextContent, Id, Class))
+import Text.Parsing.Parser.Combinators (manyTill)
 import Text.Parsing.Parser.Combinators as P
 import Text.Parsing.Parser.String (string, char, oneOf, satisfy, anyChar)
-import Text.Parsing.Parser.Token (alphaNum, letter)
+import Text.Parsing.Parser.Token (alphaNum)
 
 fromCharList :: forall f. Foldable f => f Char -> String
 fromCharList = fromCharArray <<< Array.fromFoldable
@@ -42,8 +33,6 @@ parseId = char '#' *> (Id <<< fromCharList <$> some classChar)
 parseTextContent :: EmmetParser Attribute
 parseTextContent = char '{' *> (TextContent <<< fromCharList <$> manyTill (anyChar) (char '}'))
 
--- char '{' *> (TextContent <<< fromCharList <$> some classChar) -- (Id "a") -- <$> (fromCharList <$> manyTill (anyChar) (char '}')))
-
 parseGeneralStringAttribute :: EmmetParser Attribute
 parseGeneralStringAttribute = do
   attr <- char '[' *> (P.choice $ map string [
@@ -62,5 +51,4 @@ parseElement = element <$> parseElementName <*> many (
     parseClass <|>
     parseId <|>
     parseGeneralStringAttribute
-
   )

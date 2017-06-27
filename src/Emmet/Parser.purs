@@ -1,26 +1,23 @@
 module Emmet.Parser where
 
-import Emmet.Parser.Data
-import Prelude
-
+import Emmet.Parser.Data (EmmetParser)
+import Prelude (bind, pure, (*>), (<$>), (<<<))
 import Control.Alt ((<|>))
-import Control.Apply ((*>), (<*))
 import Control.Lazy (defer)
 import Data.Array as Array
 import Data.Char.Unicode (isDigit)
 import Data.Foldable (class Foldable)
-import Data.Functor (($>), (<$))
 import Data.Int as Int
-import Data.List (some, many)
+import Data.List (some)
 import Data.Maybe (maybe)
 import Data.String (fromCharArray)
 import Emmet.Parser.Element (parseElement)
 import Emmet.Parser.InputElement (parseInputElement)
 import Emmet.Types (Emmet, child, multiplication, sibling, climbUp, text)
 import Text.Parsing.Parser (fail)
-import Text.Parsing.Parser.Combinators (manyTill, notFollowedBy, try)
+import Text.Parsing.Parser.Combinators (manyTill)
 import Text.Parsing.Parser.Combinators as P
-import Text.Parsing.Parser.String (char, satisfy, anyChar, eof)
+import Text.Parsing.Parser.String (anyChar, char, satisfy)
 
 fromCharList :: forall f. Foldable f => f Char -> String
 fromCharList = fromCharArray <<< Array.fromFoldable

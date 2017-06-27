@@ -1,26 +1,18 @@
 module Emmet.Parser.InputElement where
 
-import Emmet.Parser.Data
 import Prelude
-
+import Emmet.Parser.Data (EmmetParser)
 import Control.Alt ((<|>))
 import DOM.HTML.Indexed.InputType (InputType(..)) as IT
-import Data.Array as Array
-import Data.Char.Unicode (isAlphaNum, isDigit)
-import Data.Foldable (class Foldable)
-import Data.Functor (voidLeft)
-import Data.Int as Int
-import Data.List (many, some)
-import Data.Maybe (Maybe(..), maybe)
+import Data.List (many)
 import Data.Newtype (wrap)
-import Data.String (fromCharArray, trim)
 import Emmet.Parser.Element (parseElementName, parseClass, parseId, parseGeneralStringAttribute)
-import Emmet.Types (Attribute(..), Emmet, child, element, multiplication, sibling, InputType)
-import Text.Parsing.Parser (Parser, fail)
+import Emmet.Types (Emmet, element)
+import Emmet.Attribute(Attribute(..), InputType)
+import Text.Parsing.Parser (fail)
 import Text.Parsing.Parser.Combinators (try)
 import Text.Parsing.Parser.Combinators as P
-import Text.Parsing.Parser.String (string, char, oneOf, satisfy)
-import Text.Parsing.Parser.Token (alphaNum)
+import Text.Parsing.Parser.String (char, oneOf, string)
 
 inputType :: EmmetParser InputType
 inputType = wrap <$> P.choice [

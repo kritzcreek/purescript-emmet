@@ -13,6 +13,7 @@ import Emmet.Eval (Node(..))
 import Matryoshka as M
 import Prelude (map, otherwise, show, (#), (<#>), (<>), (<@>), (>))
 import Text.Parsing.Parser (ParseError, runParser)
+import Emmet.Attribute (renderInputType)
 
 indent ∷ Int
 indent = 2
@@ -39,8 +40,6 @@ renderNode (HTMLText s)
   | (length s) > 20 = "HH.text \"\"\"" <> s <> "\"\"\""
   | otherwise = "HH.text \"" <> s <> "\""
 
-
-
 renderWithAttributes ∷ String → List HtmlAttribute → List String → String
 renderWithAttributes name attributes children =
   "HH." <> name <> "\n"
@@ -53,7 +52,7 @@ renderWithAttributes name attributes children =
       HtmlClass c → "HP.class_ (HH.ClassName " <> show c <> ")"
       HtmlClasses cs → "HP.classes (map HH.ClassName [ " <> intercalate ", " (map show cs) <> " ])"
       HtmlTypeInput t → "HP.type_ HP." <> (renderInputType t)
-      HtmlStringAttribute name val → "HP." <> name <> " \"" <> val <> "\""
+      HtmlStringAttribute aname val → "HP." <> aname <> " \"" <> val <> "\""
 
 renderNoAttributes ∷ String → List String → String
 renderNoAttributes name children
@@ -71,29 +70,3 @@ renderList = case _ of
       singleton ("[ " <> head <> " ]")
   head : tail →
     ("[ " <> head) : map (", " <> _) tail <> singleton ("]")
-
-renderInputType ∷ InputType → String
-renderInputType a = case (unwrap a) of
-  IT.InputButton -> "InputButton"
-  IT.InputCheckbox -> "InputCheckbox"
-  IT.InputColor -> "InputColor"
-  IT.InputDate -> "InputDate"
-  IT.InputDatetime -> "InputDatetime"
-  IT.InputDatetimeLocal -> "InputDatetimeLocal"
-  IT.InputEmail -> "InputEmail"
-  IT.InputFile -> "InputFile"
-  IT.InputHidden -> "InputHidden"
-  IT.InputImage -> "InputImage"
-  IT.InputMonth -> "InputMonth"
-  IT.InputNumber -> "InputNumber"
-  IT.InputPassword -> "InputPassword"
-  IT.InputRadio -> "InputRadio"
-  IT.InputRange -> "InputRange"
-  IT.InputReset -> "InputReset"
-  IT.InputSearch -> "InputSearch"
-  IT.InputSubmit -> "InputSubmit"
-  IT.InputTel -> "InputTel"
-  IT.InputText -> "InputText"
-  IT.InputTime -> "InputTime"
-  IT.InputUrl -> "InputUrl"
-  IT.InputWeek -> "InputWeek"

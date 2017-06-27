@@ -1,8 +1,7 @@
 module Test.Main where
 
-import Emmet
 import Prelude
-
+import Emmet (Emmet, child, parseEmmet, textContentTransform)
 import Control.Monad.Aff (Aff)
 import Control.Monad.Eff (Eff)
 import DOM.HTML.Indexed.InputType (InputType(..)) as IT
@@ -10,47 +9,44 @@ import Data.Either (Either(..), isLeft)
 import Data.List as List
 import Data.Monoid (mempty)
 import Emmet.Halogen (emmetHalogen)
-import Emmet.Parser.Element as E
 import Emmet.Parser.InputElement as IE
-import Emmet.Types (Attribute(..), InputType, climbUp, element, ppEmmet, sibling, text, transform)
-import Matryoshka.Class.Corecursive (embed)
-import Matryoshka.Class.Recursive (project)
-import Test.Spec (pending, describe, it)
+import Emmet.Types (climbUp, element, ppEmmet, sibling, text, transform)
+import Emmet.Attribute(Attribute(..), InputType(..))
+import Test.Spec (describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Reporter.Console (consoleReporter)
 import Test.Spec.Runner (RunnerEffects, run)
 import Text.Parsing.Parser (runParser)
 
+-- | Parse a string with parseEmmet and compare it to
+-- | a tree
 parserEquals :: String -> Emmet -> Aff (RunnerEffects ()) Unit
 parserEquals text alg =
   let v1 = ppEmmet alg
       v2 = ppEmmet <$> ((runParser <@> parseEmmet) text)
   in v2 `shouldEqual` (Right v1)
 
+-- | Parse a string with parseEmmet, textContent transform, and compare it to
+-- | a tree
 textTransformEquals :: String -> Emmet -> Aff (RunnerEffects ()) Unit
 textTransformEquals text alg =
   let v1 = ppEmmet alg
       v2 = ppEmmet <$> textContentTransform <$> ((runParser <@> parseEmmet) text)
   in v2 `shouldEqual` (Right v1)
 
+-- | Parse a string with parseEmmet, use all available transforms,
+-- | and compare it to a tree
 transformEquals :: String -> Emmet -> Aff (RunnerEffects ()) Unit
 transformEquals text alg =
   let v1 = ppEmmet alg
       v2 = ppEmmet <$> transform <$> ((runParser <@> parseEmmet) text)
   in v2 `shouldEqual` (Right v1)
 
- -- log $ show $ ppEmmet <$> (textContentTransform <$> ((runParser <@> parseEmmet) "div>span{abc}"))
-
 main :: Eff (RunnerEffects ()) Unit
 main = do
 
   -- log $ show $ ppEmmet <$> (textContentTransform <$> ((runParser <@> parseEmmet) "div{abc}"))
   -- log $ show $ emmetHalogen "div{abc}"
-  -- log $ show $ ppEmmet <$> (textContentTransform <$> ((runParser <@> parseEmmet) "div>span{abc}"))
-  -- log $ show $ ppEmmet <$> (((runParser <@> parseEmmet) "div>span{abc}"))
-  -- log $ show $ emmetHalogen "div>span{abc}"
-  -- log $ show $ ppEmmet <$> (textContentTransform <$> ((runParser <@> parseEmmet) ))
-  -- log $ show $ emmetHalogen "div.classname#id"
 
   run [consoleReporter] do
     describe "Parser - parseEmmet Parser" do
@@ -62,22 +58,42 @@ main = do
       it "Should parse div>span{abc}" do
         parserEquals
           "div>span{abc}"
-          ((child (element "div" mempty) (element "span" $ List.singleton (TextContent "abc"))))
+          (child
+            (element "div" mempty)
+            (element "span" $ List.singleton (TextContent "abc")))
 
       it "Should parse div>span{abc}>i" do
         parserEquals
           "div>span{abc}>i"
-          (child (element "div" mempty) (child (element "span" $ List.singleton (TextContent "abc")) (element "i" mempty)))
+          (child
+            (element "div" mempty)
+            (child
+              (element "span" $ List.singleton (TextContent "abc"))
+              (element "i" mempty)
+            )
+          )
 
       it "Should parse div>span{abc}>i.c" do
         parserEquals
           "div>span{abc}>i.c"
-          (child (element "div" mempty) (child (element "span" $ List.singleton (TextContent "abc")) (element "i" $ List.singleton $ Class "c")))
+          (child
+            (element "div" mempty)
+            (child
+              (element "span" $ List.singleton (TextContent "abc"))
+              (element "i" $ List.singleton $ Class "c")
+            )
+          )
 
       it "Should parse div>span{a}^input" do
         parserEquals
           "div>span{a}^input"
-          (child (element "div" mempty) (climbUp (element "span" $ List.singleton (TextContent "a")) (element "input" mempty)))
+          (child
+            (element "div" mempty)
+            (climbUp
+              (element "span" $ List.singleton (TextContent "a"))
+              (element "input" mempty)
+            )
+          )
 
       it "Should parse input[type='text']" do
         parserEquals
@@ -123,7 +139,16 @@ main = do
       it "Should transform div>span{abc}>i" do
         textTransformEquals
           "div>span{abc}>i"
-          (child (element "div" mempty) (child (child (element "span" mempty) (text "abc")) (element "i" mempty)))
+          (child
+            (element "div" mempty)
+            (child
+              (child
+                (element "span" mempty)
+                (text "abc")
+              )
+              (element "i" mempty)
+            )
+          )
 
       it "Should transform div>span{abc}#id>i" do
         textTransformEquals
