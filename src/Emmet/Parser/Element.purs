@@ -11,18 +11,18 @@ import DOM.HTML.Indexed.InputType (InputType(..)) as IT
 import Data.Array as Array
 import Data.Char.Unicode (isAlphaNum, isDigit)
 import Data.Foldable (class Foldable)
-import Data.Functor (voidLeft)
+import Data.Functor (voidLeft, ($>))
 import Data.Int as Int
 import Data.List (many, some)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (wrap)
 import Data.String (fromCharArray, trim)
-import Emmet.Types (Attribute(..), Emmet, child, element, multiplication, sibling, InputType)
+import Emmet.Types (Attribute(..), Emmet, InputType, child, element, multiplication, sibling)
 import Text.Parsing.Parser (Parser, fail)
 import Text.Parsing.Parser.Combinators (between, endBy, endBy1, manyTill, notFollowedBy, try)
 import Text.Parsing.Parser.Combinators as P
 import Text.Parsing.Parser.String (string, char, oneOf, satisfy, anyChar)
-import Text.Parsing.Parser.Token (alphaNum)
+import Text.Parsing.Parser.Token (alphaNum, letter)
 
 fromCharList :: forall f. Foldable f => f Char -> String
 fromCharList = fromCharArray <<< Array.fromFoldable
@@ -39,6 +39,11 @@ parseClass = char '.' *> (Class <<< fromCharList <$> some classChar)
 parseId :: EmmetParser Attribute
 parseId = char '#' *> (Id <<< fromCharList <$> some classChar)
 
+parseTextContent :: EmmetParser Attribute
+parseTextContent = char '{' *> (TextContent <<< fromCharList <$> manyTill (anyChar) (char '}'))
+
+-- char '{' *> (TextContent <<< fromCharList <$> some classChar) -- (Id "a") -- <$> (fromCharList <$> manyTill (anyChar) (char '}')))
+
 parseGeneralStringAttribute :: EmmetParser Attribute
 parseGeneralStringAttribute = do
   attr <- char '[' *> (P.choice $ map string [
@@ -52,4 +57,10 @@ parseGeneralStringAttribute = do
   pure $ StringAttribute attr (fromCharList val)
 
 parseElement :: EmmetParser Emmet
-parseElement = element <$> parseElementName <*> many (parseClass <|> parseId <|> parseGeneralStringAttribute)
+parseElement = element <$> parseElementName <*> many (
+    parseTextContent <|>
+    parseClass <|>
+    parseId <|>
+    parseGeneralStringAttribute
+
+  )

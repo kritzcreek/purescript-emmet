@@ -4,20 +4,23 @@ import Emmet.Parser.Data
 import Prelude
 
 import Control.Alt ((<|>))
+import Control.Apply ((*>), (<*))
 import Control.Lazy (defer)
 import Data.Array as Array
 import Data.Char.Unicode (isDigit)
 import Data.Foldable (class Foldable)
+import Data.Functor (($>), (<$))
 import Data.Int as Int
-import Data.List (some)
+import Data.List (some, many)
 import Data.Maybe (maybe)
 import Data.String (fromCharArray)
 import Emmet.Parser.Element (parseElement)
 import Emmet.Parser.InputElement (parseInputElement)
-import Emmet.Types (Emmet, child, multiplication, sibling, climbUp)
+import Emmet.Types (Emmet, child, multiplication, sibling, climbUp, text)
 import Text.Parsing.Parser (fail)
+import Text.Parsing.Parser.Combinators (manyTill, notFollowedBy, try)
 import Text.Parsing.Parser.Combinators as P
-import Text.Parsing.Parser.String (char, satisfy)
+import Text.Parsing.Parser.String (char, satisfy, anyChar, eof)
 
 fromCharList :: forall f. Foldable f => f Char -> String
 fromCharList = fromCharArray <<< Array.fromFoldable
@@ -37,23 +40,30 @@ parseMultiplication e = do
   repetitions <- maybe (fail "Failed to parse Multiplication number") pure (Int.fromString sInt)
   pure (multiplication e repetitions)
 
+parseText :: EmmetParser Emmet
+parseText = text <$> (char '{' *> (fromCharList <$> manyTill (anyChar) (char '}')))
+
+parseLevel :: Emmet -> EmmetParser Emmet
+parseLevel root = P.choice
+   [ defer \_ -> parseChild root
+   , defer \_ -> parseSibling root
+   , defer \_ -> parseClimbUp root
+   , defer \_ -> do
+      e <- parseMultiplication root
+      P.choice
+        [ defer \_ -> parseChild e
+        , defer \_ -> parseSibling e
+        , defer \_ -> parseClimbUp e
+        , pure e
+        ]
+   , pure root
+   ]
+
 parseEmmet :: EmmetParser Emmet
 parseEmmet = do
   root <- (defer \_ -> P.between (char '(') (char ')') parseEmmet) <|>
     parseInputElement <|>
-    parseElement
+    parseElement <|>
+    parseText
 
-  P.choice
-     [ defer \_ -> parseChild root
-     , defer \_ -> parseSibling root
-     , defer \_ -> parseClimbUp root
-     , defer \_ -> do
-          e <- parseMultiplication root
-          P.choice
-            [ defer \_ -> parseChild e
-            , defer \_ -> parseSibling e
-            , defer \_ -> parseClimbUp root
-            , pure e
-            ]
-     , pure root
-     ]
+  parseLevel root

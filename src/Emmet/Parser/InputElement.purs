@@ -1,5 +1,6 @@
 module Emmet.Parser.InputElement where
 
+import Emmet.Parser.Data
 import Prelude
 
 import Control.Alt ((<|>))
@@ -13,13 +14,13 @@ import Data.List (many, some)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (wrap)
 import Data.String (fromCharArray, trim)
+import Emmet.Parser.Element (parseElementName, parseClass, parseId, parseGeneralStringAttribute)
 import Emmet.Types (Attribute(..), Emmet, child, element, multiplication, sibling, InputType)
 import Text.Parsing.Parser (Parser, fail)
+import Text.Parsing.Parser.Combinators (try)
 import Text.Parsing.Parser.Combinators as P
 import Text.Parsing.Parser.String (string, char, oneOf, satisfy)
 import Text.Parsing.Parser.Token (alphaNum)
-import Emmet.Parser.Data
-import Emmet.Parser.Element (parseElementName, parseClass, parseId, parseGeneralStringAttribute)
 
 inputType :: EmmetParser InputType
 inputType = wrap <$> P.choice [
@@ -53,7 +54,10 @@ parseTypeInput = case _ of
   _ -> fail "Element is not <input>"
 
 parseInputElement :: EmmetParser Emmet
-parseInputElement = do
+parseInputElement = try $ do
   name <- parseElementName
-  attributes <- many ((parseTypeInput name) <|> parseClass <|> parseId <|> parseGeneralStringAttribute)
-  pure $ element name attributes
+  if name == "input"
+    then do
+      attributes <- many ((parseTypeInput name) <|> parseClass <|> parseId <|> parseGeneralStringAttribute)
+      pure $ element name attributes
+    else fail "Element is not <input>"

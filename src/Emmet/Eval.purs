@@ -3,10 +3,12 @@ module Emmet.Eval where
 import Prelude
 
 import Control.Biapply (biapply)
+import Control.Bind ((>=>))
 import Control.Monad.Free (liftF)
+import DOM.HTML.Types (HTMLElement)
 import Data.Array (foldr)
 import Data.Array as Array
-import Data.Foldable (fold, intercalate)
+import Data.Foldable (fold, foldMap, intercalate)
 import Data.Functor.Nu (Nu, observe)
 import Data.List (List)
 import Data.List as List
@@ -16,19 +18,21 @@ import Data.Monoid (mempty)
 import Data.Newtype (unwrap)
 import Data.String (Pattern(Pattern), split)
 import Data.Tuple (Tuple(..))
-import Emmet.Types (Attribute, Emmet, EmmetF(..), InputType, climbUpTransform, getClass, getId, getInputType, getStringAttribute)
+import Emmet.Types (Attribute, Emmet, EmmetF(..), InputType, climbUpTransform, getClass, getId, getInputType, getStringAttribute, textContentTransform)
 import Matryoshka as M
 
 evalEmmet :: Emmet -> NE.NonEmptyList HtmlBuilder
-evalEmmet e = (climbUpTransform e) # M.cata case _ of
+evalEmmet e = (textContentTransform (climbUpTransform e)) # M.cata case _ of
   Child os c -> setBuildChildren (NE.toList c) <$> os
   ClimbUp p c -> p <> c
   Sibling a b -> a <> b
   Multiplication a n ->
     foldr (<>) a (Array.replicate (n - 1) a)
   Element name attrs ->
-    NE.singleton (htmlBuilder (List.singleton
-      { name, attributes: attributesToHtml attrs, children: List.Nil }))
+    NE.singleton (htmlBuilder (List.singleton $
+      HTMLElement { name, attributes: attributesToHtml attrs, children: List.Nil }))
+  Text t ->
+    NE.singleton (htmlBuilder (List.singleton $ HTMLText t))
 
 -- climbUp :: List HtmlBuilder -> HtmlBuilder -> HtmlBuilder
 -- climbUp l =
@@ -71,12 +75,15 @@ renderHtmlAttribute = case _ of
 
 data HtmlBuilderF a = HtmlBuilderF (List (Node a))
 
-type Node a =
-  { name :: String
-  , attributes :: List HtmlAttribute
-  , children :: List a
-  }
+data Node a
+  = HTMLElement
+    { name :: String
+    , attributes :: List HtmlAttribute
+    , children :: List a
+    }
+  | HTMLText String
 
+derive instance functorNode :: Functor Node
 derive instance functorHtmlBuilderF :: Functor HtmlBuilderF
 
 type HtmlBuilder = Nu HtmlBuilderF
@@ -85,7 +92,8 @@ htmlBuilder :: List (Node HtmlBuilder) -> HtmlBuilder
 htmlBuilder cs = M.embed (HtmlBuilderF cs)
 
 mapNode :: forall a b. (List a -> List b) -> Node a -> Node b
-mapNode f node = node { children = f node.children }
+mapNode f (HTMLElement node) = HTMLElement $ node { children = f node.children }
+mapNode f (HTMLText s) = (HTMLText s)
 
 setBuildChildren :: List HtmlBuilder -> HtmlBuilder -> HtmlBuilder
 setBuildChildren cs builder =
@@ -97,12 +105,15 @@ renderHtmlBuilder :: HtmlBuilder -> String
 renderHtmlBuilder = M.cata case _ of
   HtmlBuilderF nodes ->
     nodes
-      <#> (\ {name, attributes, children} ->
-        "<" <> name <> " "
-        <> intercalate " " (map renderHtmlAttribute attributes)
-        <> ">\n"
-        <> intercalate "\n" (map (pad 2) children)
-        <> "\n<" <> name <> "/>")
+      <#> (case _ of
+        HTMLElement {name, attributes, children} ->
+          "<" <> name <> " "
+          <> intercalate " " (map renderHtmlAttribute attributes)
+          <> ">\n"
+          <> intercalate "\n" (map (pad 2) children)
+          <> "\n<" <> name <> "/>"
+        HTMLText s -> s
+      )
       # List.intercalate "\n"
 
 pad :: Int -> String -> String

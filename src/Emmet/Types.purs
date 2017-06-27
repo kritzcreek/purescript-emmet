@@ -4,13 +4,17 @@ import Prelude
 
 import Control.Monad.Free (Free, liftF)
 import DOM.HTML.Indexed.InputType (InputType, InputType(..), renderInputType) as IT
+import Data.Foldable (class Foldable, foldMap, foldl, length)
+import Data.Functor.Mu (Mu)
 import Data.Functor.Nu (Nu)
-import Data.List (List)
+import Data.List (List, catMaybes, filter, singleton, snoc)
 import Data.Maybe (Maybe(..))
+import Data.Monoid (mempty)
 import Data.Newtype (class Newtype, unwrap)
 import Data.Tuple (Tuple(..))
 import Matryoshka as M
-import Matryoshka.Coalgebra (GCoalgebra)
+import Matryoshka.Algebra (Algebra)
+import Matryoshka.Coalgebra (GCoalgebra, Coalgebra)
 
 newtype InputType = InputType IT.InputType
 derive instance newtypeInputType :: Newtype InputType _
@@ -49,6 +53,7 @@ data Attribute
   | Id String
   | TypeInputType InputType
   | StringAttribute String String
+  | TextContent String
 
 instance attributeEq :: Eq Attribute where
   eq (TypeInputType a) (TypeInputType b) = eq a b
@@ -67,6 +72,11 @@ getClass = case _ of
   Class x -> Just x
   _ -> Nothing
 
+getTextContent :: Attribute -> Maybe String
+getTextContent = case _ of
+  TextContent x -> Just x
+  _ -> Nothing
+
 getInputType :: Attribute -> Maybe InputType
 getInputType = case _ of
   TypeInputType x -> Just x
@@ -83,6 +93,7 @@ instance showAttribute :: Show Attribute where
     Id s -> "(Id " <> s <> ")"
     TypeInputType s -> "(Type " <> (IT.renderInputType (unwrap s)) <> ")"
     StringAttribute a b -> "(StringAttribute " <> a <> " = " <> b <> ")"
+    TextContent s -> "(TextContent " <> s <> ")"
 
 data EmmetF a
   = Child a a
@@ -90,6 +101,7 @@ data EmmetF a
   | ClimbUp a a
   | Multiplication a Int
   | Element String (List Attribute)
+  | Text String
 
 derive instance functorEmmetF :: Functor EmmetF
 
@@ -97,6 +109,9 @@ type Emmet = Nu EmmetF
 
 element :: String -> List Attribute -> Emmet
 element s as = M.embed (Element s as)
+
+text :: String -> Emmet
+text s = M.embed (Text s)
 
 child :: Emmet -> Emmet -> Emmet
 child a b = M.embed (Child a b)
@@ -106,6 +121,15 @@ climbUp a b = M.embed (ClimbUp a b)
 
 climbUpTransform :: Emmet -> Emmet
 climbUpTransform e = M.futu climbUpAlgebra e
+
+buildEmmet :: forall a. Algebra EmmetF Emmet
+buildEmmet = case _ of
+  (Child a b) -> M.embed $ (Child a b)
+  (Sibling a b) -> M.embed (Sibling a b)
+  (ClimbUp a b) -> M.embed (ClimbUp a b)
+  (Multiplication a n) -> M.embed (Multiplication a n)
+  (Element a b) -> M.embed (Element a b)
+  (Text a) -> M.embed (Text a)
 
 climbUpAlgebra :: GCoalgebra (Free EmmetF) EmmetF Emmet
 climbUpAlgebra em = case M.project em of
@@ -119,7 +143,37 @@ climbUpAlgebra em = case M.project em of
   (Multiplication a n) -> Multiplication (liftF $ M.project a) n
   (Element a b) -> Element a b
   (ClimbUp a b) -> ClimbUp (liftF $ M.project a) (liftF $ M.project b)
+  (Text a) -> Text a
 
+seperateTextContent :: List Attribute -> { tc :: List Attribute, other :: List Attribute }
+seperateTextContent = foldl (\acc val -> case val of
+    TextContent s -> acc { tc = snoc acc.tc val }
+    _ -> acc { other = snoc acc.other val }
+  ) { tc : mempty, other : mempty }
+
+textContent :: Attribute -> String
+textContent (TextContent s) = s
+textContent _ = ""
+
+textContentTransform :: Emmet -> Emmet
+textContentTransform e = M.futu textContentAlgebra e
+
+textContentAlgebra :: GCoalgebra (Free EmmetF) EmmetF Emmet
+textContentAlgebra em = case M.project em of
+  (Child a b) -> Child (liftF $ M.project a) (liftF $ M.project b)
+  (Sibling a b) -> Sibling (liftF $ M.project a) (liftF $ M.project b)
+  (Multiplication a n) -> Multiplication (liftF $ M.project a) n
+  (Element a b) ->
+    let tc = seperateTextContent b
+    in case length tc.tc of
+      0 -> Element a tc.other
+      _ -> Child (liftF $ (Element a tc.other)) (liftF $ Text $ foldMap id $ map textContent tc.tc)
+
+  (ClimbUp a b) -> ClimbUp (liftF $ M.project a) (liftF $ M.project b)
+  (Text a) -> Text a
+
+transform :: Emmet -> Emmet
+transform = textContentTransform >>> climbUpTransform
 
 sibling :: Emmet -> Emmet -> Emmet
 sibling a b = M.embed (Sibling a b)
@@ -134,3 +188,4 @@ ppEmmet = M.cata case _ of
   Multiplication a n -> "(Multiplication " <> a <> " " <> show n <> ")"
   Element name attrs -> "(Element " <> name <> " " <> show attrs <> ")"
   ClimbUp a b -> "(ClimbUp " <> a <> " " <> b <> ")"
+  Text s -> "(Text " <> s <> ")"
