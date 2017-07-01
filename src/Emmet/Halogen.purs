@@ -37,7 +37,7 @@ renderNode (HTMLElement {name, attributes, children}) =
     Nothing → renderNoAttributes name children
     Just {head, tail} → renderWithAttributes name (head : tail) children
 renderNode (HTMLText s)
-  | (length s) > 20 = "HH.text \"\"\"" <> s <> "\"\"\""
+  | length s > 20 = "HH.text \"\"\"" <> s <> "\"\"\""
   | otherwise = "HH.text \"" <> s <> "\""
 
 renderWithAttributes ∷ String → List HtmlAttribute → List String → String
@@ -51,7 +51,7 @@ renderWithAttributes name attributes children =
       HtmlId id → "HP.id " <> show id
       HtmlClass c → "HP.class_ (HH.ClassName " <> show c <> ")"
       HtmlClasses cs → "HP.classes (map HH.ClassName [ " <> intercalate ", " (map show cs) <> " ])"
-      HtmlTypeInput t → "HP.type_ HP." <> (renderInputType t)
+      HtmlTypeInput t → "HP.type_ HP." <> renderInputType t
       HtmlStringAttribute aname val → "HP." <> aname <> " \"" <> val <> "\""
 
 renderNoAttributes ∷ String → List String → String

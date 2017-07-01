@@ -3,12 +3,12 @@ module Emmet.Types where
 import Prelude
 
 import Control.Monad.Free (Free, liftF)
-import Data.Foldable (foldMap, length)
+import Data.Foldable (foldMap)
 import Data.Functor.Nu (Nu)
-import Data.List (List, catMaybes)
+import Data.List (List, catMaybes, null)
+import Emmet.Attribute (Attribute, seperateTextContent, textContent)
 import Matryoshka as M
 import Matryoshka.Coalgebra (GCoalgebra)
-import Emmet.Attribute (Attribute, seperateTextContent, textContent)
 
 data EmmetF a
   = Child a a
@@ -39,34 +39,32 @@ climbUpTransform e = M.futu climbUpAlgebra e
 
 climbUpAlgebra :: GCoalgebra (Free EmmetF) EmmetF Emmet
 climbUpAlgebra em = case M.project em of
-  (Child a b) ->
-    case (M.project b) of
-      (ClimbUp c d) -> Sibling (liftF (Child a c)) (liftF $ M.project d)
-      -- This could also work I think
-      -- (ClimbUp c d) -> Child (liftF $ Sibling a d) (liftF $ M.project d)
+  Child a b ->
+    case M.project b of
+      ClimbUp c d -> Sibling (liftF (Child a c)) (liftF $ M.project d)
       _ -> Child (liftF $ M.project a) (liftF $ M.project b)
-  (Sibling a b) -> Sibling (liftF $ M.project a) (liftF $ M.project b)
-  (Multiplication a n) -> Multiplication (liftF $ M.project a) n
-  (Element a b) -> Element a b
-  (ClimbUp a b) -> ClimbUp (liftF $ M.project a) (liftF $ M.project b)
-  (Text a) -> Text a
+  Sibling a b -> Sibling (liftF $ M.project a) (liftF $ M.project b)    
+  Multiplication a n -> Multiplication (liftF $ M.project a) n
+  Element a b -> Element a b
+  ClimbUp a b -> ClimbUp (liftF $ M.project a) (liftF $ M.project b)
+  Text a -> Text a
 
 textContentTransform :: Emmet -> Emmet
 textContentTransform e = M.futu textContentAlgebra e
 
 textContentAlgebra :: GCoalgebra (Free EmmetF) EmmetF Emmet
 textContentAlgebra em = case M.project em of
-  (Child a b) -> Child (liftF $ M.project a) (liftF $ M.project b)
-  (Sibling a b) -> Sibling (liftF $ M.project a) (liftF $ M.project b)
-  (Multiplication a n) -> Multiplication (liftF $ M.project a) n
-  (Element a b) ->
+  Child a b -> Child (liftF $ M.project a) (liftF $ M.project b)
+  Sibling a b -> Sibling (liftF $ M.project a) (liftF $ M.project b)
+  Multiplication a n -> Multiplication (liftF $ M.project a) n
+  Element a b ->
     let tc = seperateTextContent b
-    in case length tc.tc of
-      0 -> Element a tc.other
-      _ -> Child (liftF $ (Element a tc.other)) (liftF $ Text $ foldMap id $ catMaybes $ map textContent tc.tc)
+    in if null tc.right 
+       then Element a tc.left
+       else Child (liftF $ (Element a tc.left)) (liftF $ Text $ foldMap id $ catMaybes $ map textContent tc.right)
 
-  (ClimbUp a b) -> ClimbUp (liftF $ M.project a) (liftF $ M.project b)
-  (Text a) -> Text a
+  ClimbUp a b -> ClimbUp (liftF $ M.project a) (liftF $ M.project b)
+  Text a -> Text a
 
 transform :: Emmet -> Emmet
 transform = textContentTransform >>> climbUpTransform

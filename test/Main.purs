@@ -23,7 +23,7 @@ import Text.Parsing.Parser (runParser)
 parserEquals :: String -> Emmet -> Aff (RunnerEffects ()) Unit
 parserEquals text alg =
   let v1 = ppEmmet alg
-      v2 = ppEmmet <$> ((runParser <@> parseEmmet) text)
+      v2 = ppEmmet <$> runParser text parseEmmet
   in v2 `shouldEqual` (Right v1)
 
 -- | Parse a string with parseEmmet, textContent transform, and compare it to
@@ -31,7 +31,7 @@ parserEquals text alg =
 textTransformEquals :: String -> Emmet -> Aff (RunnerEffects ()) Unit
 textTransformEquals text alg =
   let v1 = ppEmmet alg
-      v2 = ppEmmet <$> textContentTransform <$> ((runParser <@> parseEmmet) text)
+      v2 = ppEmmet <$> textContentTransform <$> runParser text parseEmmet
   in v2 `shouldEqual` (Right v1)
 
 -- | Parse a string with parseEmmet, use all available transforms,
@@ -39,7 +39,7 @@ textTransformEquals text alg =
 transformEquals :: String -> Emmet -> Aff (RunnerEffects ()) Unit
 transformEquals text alg =
   let v1 = ppEmmet alg
-      v2 = ppEmmet <$> transform <$> ((runParser <@> parseEmmet) text)
+      v2 = ppEmmet <$> transform <$> runParser text parseEmmet
   in v2 `shouldEqual` (Right v1)
 
 main :: Eff (RunnerEffects ()) Unit
@@ -109,7 +109,7 @@ main = do
         let r1 = runParser "[type='text']" $ IE.parseTypeInput "input"
         let r2 = runParser "[type=\"text\"]" $ IE.parseTypeInput "input"
         let r3 = runParser "div.nomatch" $ IE.parseInputElement
-        let v = (Right $ TypeInputType (InputType (IT.InputText)))
+        let v = Right $ TypeInputType (InputType (IT.InputText))
         r1 `shouldEqual` v
         r2 `shouldEqual` v
         (isLeft r3) `shouldEqual` true
@@ -174,4 +174,35 @@ main = do
               (child (element "span" $ List.singleton (Id "id")) (text "abc"))
             )
             (element "i" mempty)
+          )
+      
+      it "Should transform div{f}>span{abc}" do
+        transformEquals
+          "div{f}>span{abc}"
+          (child
+            (child
+              (element "div" mempty)
+              (text "f")
+            )
+            (child
+              (element "span" mempty)
+              (text "abc")
+            )
+          )
+          
+
+          
+
+      it "Should transform div>p>span^i" do
+        transformEquals
+          "div>p>span^i"
+          (child
+            (sibling
+              (element "div" mempty)
+              (element "i" mempty)
+            )
+            (child
+              (element "p" mempty)
+              (element "span" mempty)
+            )
           )

@@ -10,13 +10,13 @@ import Data.List as List
 import Data.List.NonEmpty as NE
 import Data.Maybe (Maybe(Just, Nothing), maybe)
 import Data.String (Pattern(Pattern), split)
-import Data.Tuple (Tuple(..))
+import Data.Tuple (Tuple(..), uncurry)
 import Emmet.Types (Emmet, EmmetF(..), climbUpTransform, textContentTransform)
 import Emmet.Attribute (Attribute, InputType, getClass, getId, getInputType, getStringAttribute)
 import Matryoshka as M
 
 evalEmmet :: Emmet -> NE.NonEmptyList HtmlBuilder
-evalEmmet e = (textContentTransform (climbUpTransform e)) # M.cata case _ of
+evalEmmet e = textContentTransform (climbUpTransform e) # M.cata case _ of
   Child os c -> setBuildChildren (NE.toList c) <$> os
   ClimbUp p c -> p <> c
   Sibling a b -> a <> b
@@ -35,7 +35,7 @@ attributesToHtml attrs =
     classes = List.mapMaybe getClass attrs
     ids = List.mapMaybe getId attrs
     inputTypes = map HtmlTypeInput (List.mapMaybe getInputType attrs)
-    stringAttributes = map (\(Tuple a b) -> HtmlStringAttribute a b) (List.mapMaybe getStringAttribute attrs)
+    stringAttributes = map (uncurry HtmlStringAttribute) (List.mapMaybe getStringAttribute attrs)
     htmlClasses =
       case List.uncons classes of
         Nothing -> List.Nil

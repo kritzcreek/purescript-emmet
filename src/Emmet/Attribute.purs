@@ -8,6 +8,8 @@ import Data.Maybe (Maybe(..))
 import Data.Monoid (mempty)
 import Data.Newtype (class Newtype, unwrap)
 import Data.Tuple (Tuple(..))
+import Data.Filterable (partitionMap)
+import Data.Either(Either(..))
 
 data Attribute
   = Class String
@@ -16,12 +18,7 @@ data Attribute
   | StringAttribute String String
   | TextContent String
 
-instance attributeEq :: Eq Attribute where
-  eq (TypeInputType a) (TypeInputType b) = eq a b
-  eq (Class a) (Class b) = eq a b
-  eq (Id a) (Id b) = eq a b
-  eq (StringAttribute a b) (StringAttribute c d) = (eq a c) && (eq b d)
-  eq _ _ = false
+derive instance attributeEq :: Eq Attribute
 
 newtype InputType = InputType IT.InputType
 derive instance newtypeInputType :: Newtype InputType _
@@ -85,17 +82,16 @@ instance showAttribute :: Show Attribute where
   show = case _ of
     Class s -> "(Class " <> s <> ")"
     Id s -> "(Id " <> s <> ")"
-    TypeInputType s -> "(Type " <> (IT.renderInputType (unwrap s)) <> ")"
+    TypeInputType s -> "(Type " <> IT.renderInputType (unwrap s) <> ")"
     StringAttribute a b -> "(StringAttribute " <> a <> " = " <> b <> ")"
     TextContent s -> "(TextContent " <> s <> ")"
 
--- | Split a list of attributes into a list of TextContent attributes,
--- | and everything else.
-seperateTextContent :: List Attribute -> { tc :: List Attribute, other :: List Attribute }
-seperateTextContent = foldl (\acc val -> case val of
-    TextContent s -> acc { tc = snoc acc.tc val }
-    _ -> acc { other = snoc acc.other val }
-  ) { tc : mempty, other : mempty }
+-- | Split a list of attributes into a list of TextContent attributes (right),
+-- | and everything else (left).
+seperateTextContent :: List Attribute -> { left :: List Attribute, right :: List Attribute }
+seperateTextContent = partitionMap case _ of
+  s@(TextContent _) -> Right s
+  a -> Left a
 
 -- | Get the text content of an attribute
 textContent :: Attribute -> Maybe String
@@ -103,7 +99,7 @@ textContent (TextContent s) = Just s
 textContent _ = Nothing
 
 renderInputType ∷ InputType → String
-renderInputType a = case (unwrap a) of
+renderInputType a = case unwrap a of
   IT.InputButton -> "InputButton"
   IT.InputCheckbox -> "InputCheckbox"
   IT.InputColor -> "InputColor"
