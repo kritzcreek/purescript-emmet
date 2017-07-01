@@ -2,35 +2,21 @@ module Emmet.Types where
 
 import Prelude
 
+import Control.Monad.Free (Free, liftF)
+import Data.Foldable (foldMap)
 import Data.Functor.Nu (Nu)
-import Data.List (List)
-import Data.Maybe (Maybe(..))
+import Data.List (List, catMaybes, null)
+import Emmet.Attribute (Attribute, seperateTextContent, textContent)
 import Matryoshka as M
-
-data Attribute
-  = Class String
-  | Id String
-
-getClass :: Attribute -> Maybe String
-getClass = case _ of
-  Class x -> Just x
-  _ -> Nothing
-
-getId :: Attribute -> Maybe String
-getId = case _ of
-  Id x -> Just x
-  _ -> Nothing
-
-instance showAttribute :: Show Attribute where
-  show = case _ of
-    Class s -> "(Class " <> s <> ")"
-    Id s -> "(Id " <> s <> ")"
+import Matryoshka.Coalgebra (GCoalgebra)
 
 data EmmetF a
   = Child a a
   | Sibling a a
+  | ClimbUp a a
   | Multiplication a Int
   | Element String (List Attribute)
+  | Text String
 
 derive instance functorEmmetF :: Functor EmmetF
 
@@ -39,8 +25,49 @@ type Emmet = Nu EmmetF
 element :: String -> List Attribute -> Emmet
 element s as = M.embed (Element s as)
 
+text :: String -> Emmet
+text s = M.embed (Text s)
+
 child :: Emmet -> Emmet -> Emmet
 child a b = M.embed (Child a b)
+
+climbUp :: Emmet -> Emmet -> Emmet
+climbUp a b = M.embed (ClimbUp a b)
+
+climbUpTransform :: Emmet -> Emmet
+climbUpTransform e = M.futu climbUpAlgebra e
+
+climbUpAlgebra :: GCoalgebra (Free EmmetF) EmmetF Emmet
+climbUpAlgebra em = case M.project em of
+  Child a b ->
+    case M.project b of
+      ClimbUp c d -> Sibling (liftF (Child a c)) (liftF $ M.project d)
+      _ -> Child (liftF $ M.project a) (liftF $ M.project b)
+  Sibling a b -> Sibling (liftF $ M.project a) (liftF $ M.project b)    
+  Multiplication a n -> Multiplication (liftF $ M.project a) n
+  Element a b -> Element a b
+  ClimbUp a b -> ClimbUp (liftF $ M.project a) (liftF $ M.project b)
+  Text a -> Text a
+
+textContentTransform :: Emmet -> Emmet
+textContentTransform e = M.futu textContentAlgebra e
+
+textContentAlgebra :: GCoalgebra (Free EmmetF) EmmetF Emmet
+textContentAlgebra em = case M.project em of
+  Child a b -> Child (liftF $ M.project a) (liftF $ M.project b)
+  Sibling a b -> Sibling (liftF $ M.project a) (liftF $ M.project b)
+  Multiplication a n -> Multiplication (liftF $ M.project a) n
+  Element a b ->
+    let tc = seperateTextContent b
+    in if null tc.right 
+       then Element a tc.left
+       else Child (liftF $ (Element a tc.left)) (liftF $ Text $ foldMap id $ catMaybes $ map textContent tc.right)
+
+  ClimbUp a b -> ClimbUp (liftF $ M.project a) (liftF $ M.project b)
+  Text a -> Text a
+
+transform :: Emmet -> Emmet
+transform = textContentTransform >>> climbUpTransform
 
 sibling :: Emmet -> Emmet -> Emmet
 sibling a b = M.embed (Sibling a b)
@@ -54,3 +81,5 @@ ppEmmet = M.cata case _ of
   Sibling a b -> "(Sibling " <> a <> " " <> b <> ")"
   Multiplication a n -> "(Multiplication " <> a <> " " <> show n <> ")"
   Element name attrs -> "(Element " <> name <> " " <> show attrs <> ")"
+  ClimbUp a b -> "(ClimbUp " <> a <> " " <> b <> ")"
+  Text s -> "(Text " <> s <> ")"
