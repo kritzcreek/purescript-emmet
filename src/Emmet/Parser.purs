@@ -47,7 +47,12 @@ parseId :: EmmetParser Attribute
 parseId = char '#' *> (Id <<< fromCharList <$> some classChar)
 
 parseElement :: EmmetParser Emmet
-parseElement = element <$> parseElementName <*> many (parseClass <|> parseId)
+parseElement = explicitTag <|> implicitTag
+  where
+    explicitTag = element <$> parseElementName <*> many (parseClass <|> parseId)
+
+    -- #page.full-width>header.bigger  --> div#page.full-width>header.bigger
+    implicitTag = element <$> pure "div" <*> some (parseClass <|> parseId)
 
 parseEmmet :: EmmetParser Emmet
 parseEmmet = do
