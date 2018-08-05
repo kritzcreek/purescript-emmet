@@ -10,7 +10,7 @@ import Data.Foldable (class Foldable)
 import Data.Int as Int
 import Data.List (many, some)
 import Data.Maybe (maybe)
-import Data.String (fromCharArray)
+import Data.String.CodeUnits (fromCharArray)
 import Emmet.Types (Attribute(..), Emmet, child, element, multiplication, sibling)
 import Text.Parsing.Parser (Parser, fail)
 import Text.Parsing.Parser.Combinators as P

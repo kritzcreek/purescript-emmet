@@ -10,6 +10,7 @@
     "test": "test"
   },
   "scripts": {
+    "postinstall": "bower install",
     "compile": "purs compile \"src/**/*.purs\" \"bower_components/purescript-*/src/**/*.purs\" \"bin/Main.purs\" ",
     "prepublish": "rimraf output && npm run compile",
     "build": "npm run -s compile",
