@@ -1,6 +1,6 @@
 {
   "name": "purescript-emmet",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Emmet for PureScript",
   "main": "index.js",
   "bin": {
