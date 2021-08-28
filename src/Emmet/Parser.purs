@@ -1,11 +1,10 @@
 module Emmet.Parser where
 
 import Prelude
-
 import Control.Alt ((<|>))
 import Control.Lazy (defer)
 import Data.Array as Array
-import Data.Char.Unicode (isAlphaNum, isDigit)
+import Data.CodePoint.Unicode (isAlphaNum, isDecDigit)
 import Data.Foldable (class Foldable)
 import Data.Int as Int
 import Data.List (many, some)
@@ -16,8 +15,10 @@ import Text.Parsing.Parser (Parser, fail)
 import Text.Parsing.Parser.Combinators as P
 import Text.Parsing.Parser.String (char, satisfy)
 import Text.Parsing.Parser.Token (alphaNum)
+import Data.String.CodePoints (codePointFromChar)
 
-type EmmetParser a = Parser String a
+type EmmetParser a
+  = Parser String a
 
 fromCharList :: forall f. Foldable f => f Char -> String
 fromCharList = fromCharArray <<< Array.fromFoldable
@@ -33,12 +34,12 @@ parseSibling e = sibling e <$> (char '+' *> parseEmmet)
 
 parseMultiplication :: Emmet -> EmmetParser Emmet
 parseMultiplication e = do
-  sInt <- fromCharList <$> (char '*' *> some (satisfy isDigit))
+  sInt <- fromCharList <$> (char '*' *> some (satisfy (isDecDigit <<< codePointFromChar)))
   repetitions <- maybe (fail "Failed to parse Multiplication number") pure (Int.fromString sInt)
   pure (multiplication e repetitions)
 
 classChar :: EmmetParser Char
-classChar = satisfy (isAlphaNum || (==) '-' || (==) '_')
+classChar = satisfy ((isAlphaNum <<< codePointFromChar) || (==) '-' || (==) '_')
 
 parseClass :: EmmetParser Attribute
 parseClass = char '.' *> (Class <<< fromCharList <$> some classChar)
@@ -49,23 +50,23 @@ parseId = char '#' *> (Id <<< fromCharList <$> some classChar)
 parseElement :: EmmetParser Emmet
 parseElement = explicitTag <|> implicitTag
   where
-    explicitTag = element <$> parseElementName <*> many (parseClass <|> parseId)
+  explicitTag = element <$> parseElementName <*> many (parseClass <|> parseId)
 
-    -- #page.full-width>header.bigger  --> div#page.full-width>header.bigger
-    implicitTag = element <$> pure "div" <*> some (parseClass <|> parseId)
+  -- #page.full-width>header.bigger  --> div#page.full-width>header.bigger
+  implicitTag = element <$> pure "div" <*> some (parseClass <|> parseId)
 
 parseEmmet :: EmmetParser Emmet
 parseEmmet = do
   root <- (defer \_ -> P.between (char '(') (char ')') parseEmmet) <|> parseElement
   P.choice
-     [ defer \_ -> parseChild root
-     , defer \_ -> parseSibling root
-     , defer \_ -> do
-          e <- parseMultiplication root
-          P.choice
-            [ defer \_ -> parseChild e
-            , defer \_ -> parseSibling e
-            , pure e
-            ]
-     , pure root
-     ]
+    [ defer \_ -> parseChild root
+    , defer \_ -> parseSibling root
+    , defer \_ -> do
+        e <- parseMultiplication root
+        P.choice
+          [ defer \_ -> parseChild e
+          , defer \_ -> parseSibling e
+          , pure e
+          ]
+    , pure root
+    ]

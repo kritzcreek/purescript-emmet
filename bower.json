@@ -12,14 +12,14 @@
     "output"
   ],
   "dependencies": {
-    "purescript-prelude": "^4.1.0",
-    "purescript-console": "^4.1.0",
-    "purescript-parsing": "^5.0.1",
-    "purescript-newtype": "^3.0.0",
-    "purescript-matryoshka": "^0.4.0",
-    "purescript-node-process": "^6.0.0"
+    "purescript-prelude": "^5.0.0",
+    "purescript-console": "^5.0.0",
+    "purescript-parsing": "^6.0.0",
+    "purescript-newtype": "^4.0.0",
+    "purescript-matryoshka": "^0.5.0",
+    "purescript-node-process": "^8.0.0"
   },
   "devDependencies": {
-    "purescript-psci-support": "^4.0.0"
+    "purescript-psci-support": "^5.0.0"
   }
 }
